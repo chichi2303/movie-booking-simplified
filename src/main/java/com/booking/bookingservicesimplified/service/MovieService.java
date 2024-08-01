@@ -6,8 +6,9 @@ import com.booking.bookingservicesimplified.dto.response.MovieDetail;
 import com.booking.bookingservicesimplified.entity.Movie;
 import com.booking.bookingservicesimplified.entity.Showtime;
 import com.booking.bookingservicesimplified.mapper.MovieMapper;
-import com.booking.bookingservicesimplified.repository.MovieRespository;
+import com.booking.bookingservicesimplified.repository.MovieRepository;
 import com.booking.bookingservicesimplified.repository.ShowtimeRepository;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,44 +19,62 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MovieService {
 
-  private final MovieRespository movieRespository;
+  private final MovieRepository movieRepository;
   private final ShowtimeRepository showtimeRepository;
 
   public List<MovieDetail> getAllMovies() {
-    List<Movie> movies = movieRespository.findAll();
+    List<Movie> movies = movieRepository.findAll();
     return movies.stream()
         .map(MovieMapper::mapToMovieDetail)
         .toList();
   }
 
   public Optional<MovieDetail> getMovieById(Long id) {
-    return movieRespository.findById(id)
+    return movieRepository.findById(id)
         .map(MovieMapper::mapToMovieDetail);
   }
 
+  @Transactional
   public MovieDetail addMovie(MovieRequestDetail movieRequestDetail) {
-    if (movieRespository.existbyid(movieRequestDetail.getId())) {
+    if (movieRepository.existbyid(movieRequestDetail.getId())) {
       throw new RuntimeException("Movie with id " + movieRequestDetail.getId() + " already exists");
     }
     Movie movie = MovieMapper.mapToMovie(movieRequestDetail);
-    movie.getShowtimes().forEach(showtime -> showtime.setMovie(movie));
-    Movie savedMovie = movieRespository.save(movie);
+
+    // Save the movie first to get its ID
+    Movie savedMovie = movieRepository.save(movie);
+
+    // Update showtimes with correct movie reference
+    for (Showtime showtime : savedMovie.getShowtimes()) {
+      showtime.setMovie(savedMovie);
+    }
+    showtimeRepository.saveAll(savedMovie.getShowtimes());
     return MovieMapper.mapToMovieDetail(savedMovie);
   }
 
+  @Transactional
   public List<MovieDetail> addMovies(List<MovieRequestDetail> movieRequestDetails) {
     List<Movie> movies = movieRequestDetails.stream()
         .map(MovieMapper::mapToMovie)
         .toList();
 
     movies.forEach(movie -> {
-      if (movieRespository.existbyid(movie.getId())) {
+      if (movieRepository.existbyid(movie.getId())) {
         throw new RuntimeException("One or more movies already exists");
       }
       movie.getShowtimes().forEach(showtime -> showtime.setMovie(movie));
     });
+    // Save movies first to get their IDs
+    List<Movie> savedMovies = movieRepository.saveAll(movies);
 
-    List<Movie> savedMovies = movieRespository.saveAll(movies);
+    //update showtimes with movie reference
+    savedMovies.forEach(movie -> {
+      for (Showtime showtime : movie.getShowtimes()) {
+        showtime.setMovie(movie);
+      }
+      showtimeRepository.saveAll(movie.getShowtimes());
+    });
+
     return savedMovies.stream()
         .map(MovieMapper::mapToMovieDetail)
         .toList();
@@ -64,7 +83,7 @@ public class MovieService {
   public List<MovieDetail> updateMovies(List<MovieRequestDetail> movieRequestDetails) {
     List<Movie> updatedMovies = new ArrayList<>();
     for (MovieRequestDetail movieRequestDetail : movieRequestDetails) {
-      Movie existingMovie = movieRespository.findById(movieRequestDetail.getId())
+      Movie existingMovie = movieRepository.findById(movieRequestDetail.getId())
           .orElseThrow(() -> new RuntimeException("Movie not found"));
       existingMovie.setTitle(movieRequestDetail.getTitle());
       existingMovie.setGenre(movieRequestDetail.getGenre());
@@ -82,7 +101,7 @@ public class MovieService {
       );
       updatedMovies.add(existingMovie);
     }
-    List<Movie> savedMovies = movieRespository.saveAll(updatedMovies);
+    List<Movie> savedMovies = movieRepository.saveAll(updatedMovies);
     return savedMovies.stream()
         .map(MovieMapper::mapToMovieDetail)
         .toList();
@@ -92,7 +111,7 @@ public class MovieService {
     if (showtimeRepository.existsByMovieId(id)) {
       throw new RuntimeException("Cannot delete movie with active showtimes");
     }
-    movieRespository.deleteById(id);
+    movieRepository.deleteById(id);
   }
 }
 

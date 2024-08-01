@@ -5,7 +5,7 @@ import com.booking.bookingservicesimplified.dto.response.ShowtimeDetail;
 import com.booking.bookingservicesimplified.entity.Movie;
 import com.booking.bookingservicesimplified.entity.Showtime;
 import com.booking.bookingservicesimplified.mapper.ShowtimeMapper;
-import com.booking.bookingservicesimplified.repository.MovieRespository;
+import com.booking.bookingservicesimplified.repository.MovieRepository;
 import com.booking.bookingservicesimplified.repository.ShowtimeRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class ShowtimeService {
 
   private final ShowtimeRepository showtimeRepository;
   private final MovieService movieService;
-  private final MovieRespository movieRespository;
+  private final MovieRepository movieRepository;
 
   public List<ShowtimeDetail> getAllShowtimes() {
     List<Showtime> showtimes = showtimeRepository.findAll();
@@ -33,7 +33,7 @@ public class ShowtimeService {
   }
 
   public ShowtimeDetail addShowtime(ShowtimeRequestDetail requestDetail) {
-    Movie movie = movieRespository.findById(requestDetail.getMovieId())
+    Movie movie = movieRepository.findById(requestDetail.getMovieId())
         .orElseThrow(() -> new RuntimeException("Movie not found"));
 
     Showtime showtime = Showtime.builder()
