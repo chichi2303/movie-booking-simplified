@@ -26,11 +26,11 @@ public class MovieMapper {
         .genre(movieRequestDetail.getGenre())
         .director(movieRequestDetail.getDirector())
         .build();
-    if (movieRequestDetail.getShowtimes() != null) {
-      movie.setShowtimes(movieRequestDetail.getShowtimes().stream()
-          .map(MovieMapper::toShowtime)
-          .toList());
-    }
+//    if (movieRequestDetail.getShowtimes() != null) {
+//      movie.setShowtimes(movieRequestDetail.getShowtimes().stream()
+//          .map(MovieMapper::toShowtime)
+//          .toList());
+//    }
     return movie;
   }
 

@@ -3,9 +3,11 @@ package com.booking.bookingservicesimplified.service;
 
 import com.booking.bookingservicesimplified.dto.MovieRequestDetail;
 import com.booking.bookingservicesimplified.dto.response.MovieDetail;
+import com.booking.bookingservicesimplified.dto.response.ShowtimeDetail;
 import com.booking.bookingservicesimplified.entity.Movie;
 import com.booking.bookingservicesimplified.entity.Showtime;
 import com.booking.bookingservicesimplified.mapper.MovieMapper;
+import com.booking.bookingservicesimplified.mapper.ShowtimeMapper;
 import com.booking.bookingservicesimplified.repository.MovieRepository;
 import com.booking.bookingservicesimplified.repository.ShowtimeRepository;
 import jakarta.transaction.Transactional;
@@ -45,10 +47,10 @@ public class MovieService {
     Movie savedMovie = movieRepository.save(movie);
 
     // Update showtimes with correct movie reference
-    for (Showtime showtime : savedMovie.getShowtimes()) {
-      showtime.setMovie(savedMovie);
+    for (ShowtimeDetail showtime : movieRequestDetail.getShowtimes()) {
+      showtime.setMovieId(savedMovie.getId());
     }
-    showtimeRepository.saveAll(savedMovie.getShowtimes());
+    showtimeRepository.saveAll(ShowtimeMapper.mapToShowtimes(movieRequestDetail.getShowtimes()));
     return MovieMapper.mapToMovieDetail(savedMovie);
   }
 
@@ -114,4 +116,3 @@ public class MovieService {
     movieRepository.deleteById(id);
   }
 }
-

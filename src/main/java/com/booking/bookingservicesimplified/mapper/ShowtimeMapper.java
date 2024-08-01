@@ -3,6 +3,8 @@ package com.booking.bookingservicesimplified.mapper;
 import com.booking.bookingservicesimplified.dto.response.ShowtimeDetail;
 import com.booking.bookingservicesimplified.entity.Movie;
 import com.booking.bookingservicesimplified.entity.Showtime;
+import java.util.List;
+import lombok.val;
 
 public class ShowtimeMapper {
 
@@ -24,4 +26,13 @@ public class ShowtimeMapper {
         .build();
   }
 
+  public static List<Showtime> mapToShowtimes(List<ShowtimeDetail> showtimes) {
+      return showtimes.stream().map(s -> {
+      val showTime = new Showtime();
+      showTime.setStartTime(s.getStartTime());
+      showTime.setMovieId(s.getMovieId());
+      showTime.setAvailableSeats(s.getAvailableSeats());
+      return showTime;
+    }).toList();
+  }
 }
